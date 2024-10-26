@@ -1,0 +1,77 @@
+1)import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics import accuracy_score
+from sklearn.linear_model import LogisticRegression
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.metrics import accuracy_score, classification_report
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.metrics import confusion_matrix, roc_curve, auc
+
+2)#loading the data from csv file to a pandas df
+raw_mail_data=pd.read_csv('C:\\Users\\Amit\\Desktop\\mail_data.csv')
+
+3)raw_mail_data.head()
+4)raw_mail_data.shape
+5)raw_mail_data.info()
+6)raw_mail_data.isnull().sum()
+7)#replace the null values with a null string
+mail_data=raw_mail_data.where((pd.notnull(raw_mail_data)),'')
+
+8)#printing the first 5 rows of df
+mail_data.head()
+
+9)#Prepare the data for training
+# Convert labels to binary (1 for spam, 0 for ham)
+mail_data['Category'] = mail_data['Category'].map({'spam': 1, 'ham': 0})
+
+# Split data into features (X) and labels (y)
+X = mail_data['Message']
+y = mail_data['Category']
+
+10)#Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+11)#Convert text into a bag-of-words model using CountVectorizer
+vectorizer = CountVectorizer()
+X_train_vec = vectorizer.fit_transform(X_train)
+X_test_vec = vectorizer.transform(X_test)
+
+
+12)#Train the Logistic Regression model
+model = LogisticRegression()
+model.fit(X_train_vec, y_train)
+
+
+13)#Make predictions on the test set
+y_pred = model.predict(X_test_vec)
+
+14)# Evaluate the model
+# Calculate accuracy
+accuracy = accuracy_score(y_test, y_pred)
+print(f'Accuracy: {accuracy * 100:.2f}%')
+
+# Detailed classification report
+print(classification_report(y_test, y_pred))
+
+
+15)# Compute predicted probabilities
+y_prob = model.predict_proba(X_test_vec)[:, 1]
+
+# Calculate false positive rate, true positive rate, and thresholds for ROC curve
+fpr, tpr, thresholds = roc_curve(y_test, y_prob)
+
+# Calculate the Area Under the Curve (AUC)
+roc_auc = auc(fpr, tpr)
+
+# Plot the ROC curve
+plt.figure(figsize=(6,4))
+plt.plot(fpr, tpr, label=f'Logistic Regression (AUC = {roc_auc:.2f})')
+plt.plot([0, 1], [0, 1], 'k--')  # Diagonal line
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('ROC Curve')
+plt.legend(loc='lower right')
+plt.show()
